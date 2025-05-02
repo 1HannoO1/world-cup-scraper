@@ -563,26 +563,25 @@ for i, value in enumerate(top_scorers['Total Goals']):
 plt.tight_layout()
 plt.show()
 
-# Commented out IPython magic to ensure Python compatibility.
-import os
-from getpass import getpass
+# import os
+# from getpass import getpass
 
-# Save requirements.txt to local Colab filesystem
-with open('requirements.txt', 'w') as f:
-    f.write("beautifulsoup4\nrequests\npandas\nlxml\n")
+# # Save requirements.txt to local Colab filesystem
+# with open('requirements.txt', 'w') as f:
+#     f.write("beautifulsoup4\nrequests\npandas\nlxml\n")
 
-# GitHub credentials
-username = '1HannoO1'
-repo = 'world-cup-scraper'
-token = getpass('Enter your GitHub token: ')
+# # GitHub credentials
+# username = '1HannoO1'
+# repo = 'world-cup-scraper'
+# token = getpass('Enter your GitHub token: ')
 
-# Upload using GitHub API
-!git config --global user.email "you@example.com"
-!git config --global user.name "Your Name"
+# # Upload using GitHub API
+# !git config --global user.email "you@example.com"
+# !git config --global user.name "Your Name"
 
-!git clone https://{username}:{token}@github.com/{username}/{repo}.git
-!cp requirements.txt {repo}/
+# !git clone https://{username}:{token}@github.com/{username}/{repo}.git
+# !cp requirements.txt {repo}/
 # %cd {repo}
-!git add requirements.txt
-!git commit -m "Add requirements.txt"
-!git push origin main
+# !git add requirements.txt
+# !git commit -m "Add requirements.txt"
+# !git push origin main
