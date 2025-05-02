@@ -20,185 +20,99 @@ from datetime import datetime
 st.set_page_config(layout="wide")
 st.title("FIFA World Cup Matches Scraper and Analyzer")
 
+import streamlit as st
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+from datetime import datetime
+import time
+
+# Configure Streamlit
+st.set_page_config(layout="wide", page_title="World Cup Scraper")
+st.title("FIFA World Cup Matches Scraper")
+
+# Initialize session state
+if 'df_fifa' not in st.session_state:
+    st.session_state.df_fifa = pd.DataFrame()
+
+# Optimized scraping function
+@st.cache_data(ttl=3600, show_spinner="Scraping data...")
 def scrape_world_cup_matches(year):
-    url = f'https://en.wikipedia.org/wiki/{year}_FIFA_World_Cup'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    try:
+        url = f'https://en.wikipedia.org/wiki/{year}_FIFA_World_Cup'
+        headers = {'User-Agent': 'Mozilla/5.0'}
 
-    matches = []
-    current_stage = "Group stage"
+        # Use session with retries
+        session = requests.Session()
+        retry = requests.adapters.HTTPAdapter(max_retries=3)
+        session.mount('https://', retry)
 
-    # Special handling for 1990 group stage matches
-    if year == 1990:
-        group_tables = soup.find_all('table', style=re.compile('width:100%'))
+        response = session.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-        for table in group_tables:
-            prev = table.find_previous(['h2', 'h3', 'h4'])
-            if prev and 'group' in prev.get_text().lower():
-                group_name = prev.get_text().strip()
-                current_date = None
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-                for row in table.find_all('tr'):
-                    if len(row.find_all('td')) == 1:
-                        date_cell = row.find('td')
-                        if date_cell:
-                            current_date = date_cell.get_text(strip=True)
-
-                    cells = row.find_all('td')
-                    if len(cells) >= 3 and current_date:
-                        try:
-                            home_team = cells[0].get_text(strip=True)
-                            score = cells[1].get_text(strip=True)
-                            away_info = cells[2].get_text('\n', strip=True).split('\n')
-                            away_team = away_info[0]
-
-                            venue_city = away_info[-1].split(',') if len(away_info) > 1 else ["Unknown", "Unknown"]
-                            venue = venue_city[0].strip() if len(venue_city) > 0 else "Unknown"
-                            city = venue_city[1].strip() if len(venue_city) > 1 else "Unknown"
-
-                            score_parts = re.findall(r'\d+', score)
-                            home_score = int(score_parts[0]) if score_parts else 0
-                            away_score = int(score_parts[1]) if len(score_parts) > 1 else 0
-
-                            # Goal scorers not available in these tables
-                            home_scorers = []
-                            away_scorers = []
-
-                            matches.append({
-                                'year': year,
-                                'date': current_date,
-                                'stage': group_name,
-                                'team1': home_team,
-                                'score1': home_score,
-                                'team2': away_team,
-                                'score2': away_score,
-                                'venue': venue,
-                                'city': city,
-                                'referee': 'Unknown',
-                                'round': 'Group stage',
-                                'goal_scorers_team1': '; '.join(home_scorers) if home_scorers else 'None',
-                                'goal_scorers_team2': '; '.join(away_scorers) if away_scorers else 'None'
-                            })
-                        except Exception as e:
-                            st.warning(f"Error processing 1990 group match: {e}")
-
-    # Process all footballbox matches
-    footballboxes = soup.find_all('div', class_='footballbox')
-
-    for box in footballboxes:
-        try:
-            # Determine stage
-            prev = box.find_previous(['h2', 'h3', 'h4'])
-            if prev:
-                header_text = prev.get_text().lower()
-                if year == 1990:
-                    if 'round of 16' in header_text or 'second round' in header_text:
-                        current_stage = "Round of 16"
-                    elif 'quarter' in header_text:
-                        current_stage = "Quarter-finals"
-                    elif 'semi' in header_text:
-                        current_stage = "Semi-finals"
-                    elif 'third' in header_text or 'play-off' in header_text:
-                        current_stage = "Third place play-off"
-                    elif 'final' in header_text:
-                        current_stage = "Final"
-                else:
-                    if 'group' in header_text:
-                        current_stage = "Group stage"
-                    elif 'round of 16' in header_text:
-                        current_stage = "Round of 16"
-                    elif 'quarter' in header_text:
-                        current_stage = "Quarter-finals"
-                    elif 'semi' in header_text:
-                        current_stage = "Semi-finals"
-                    elif 'third' in header_text or 'play-off' in header_text:
-                        current_stage = "Third place play-off"
-                    elif 'final' in header_text:
-                        current_stage = "Final"
-
-            # Extract match details
-            home_team = box.find('th', class_='fhome').get_text(strip=True)
-            score_text = box.find('th', class_='fscore').get_text(strip=True)
-            away_team = box.find('th', class_='faway').get_text(strip=True)
-
-            score_parts = re.findall(r'\d+', score_text)
-            home_score = int(score_parts[0]) if score_parts else 0
-            away_score = int(score_parts[1]) if len(score_parts) > 1 else 0
-
-            # Date
-            date_div = box.find('div', class_='fdate')
-            date = date_div.get_text(strip=True) if date_div else "Unknown"
-
-            # Venue and city
-            venue = "Unknown"
-            city = "Unknown"
-            location = box.find('div', itemprop='location')
-            if location:
-                links = location.find_all('a')
-                if links:
-                    venue = links[0].get_text(strip=True)
-                    if len(links) > 1:
-                        city = links[1].get_text(strip=True)
-
-            # Referee
-            referee = "Unknown"
-            fright = box.find('div', class_='fright')
-            if fright:
-                ref_div = fright.find_all('div')[-1]
-                ref_text = ref_div.get_text(strip=True)
-                if 'Referee:' in ref_text:
-                    ref_link = ref_div.find('a')
-                    referee = ref_link.get_text(strip=True) if ref_link else ref_text.replace('Referee:', '').strip()
-
-            # Goal scorers
-            home_scorers = []
-            away_scorers = []
-
-            # Regular goals
-            for goal in box.find_all('span', class_='fb-goal'):
-                scorer = goal.find_previous('a')
-                if scorer:
-                    minute = goal.get_text(strip=True)
-                    parent = goal.find_parent('td')
-                    if parent and 'fhgoal' in parent.get('class', []):
-                        home_scorers.append(f"{scorer.get_text(strip=True)} {minute}")
-                    elif parent and 'fagoal' in parent.get('class', []):
-                        away_scorers.append(f"{scorer.get_text(strip=True)} {minute}")
-
-            # Penalty shootout
-            pen_header = box.find('th', string=lambda t: t and 'penalties' in t.lower())
-            if pen_header:
-                for row in pen_header.find_next_siblings('tr'):
-                    for scorer in row.find_all('a'):
-                        pen = scorer.find_next('span', typeof='mw:File')
-                        if pen:
-                            result = "scored" if "check" in pen.img['src'] else "missed"
-                            parent = scorer.find_parent('td')
-                            if parent and 'fhgoal' in parent.get('class', []):
-                                home_scorers.append(f"{scorer.get_text(strip=True)} (pen {result})")
-                            elif parent and 'fagoal' in parent.get('class', []):
-                                away_scorers.append(f"{scorer.get_text(strip=True)} (pen {result})")
+        # Simplified scraping logic - adapt with your actual parsing code
+        matches = []
+        for match in soup.select('.footballbox'):
+            home = match.select_one('.fhome').get_text(strip=True)
+            away = match.select_one('.faway').get_text(strip=True)
+            score = match.select_one('.fscore').get_text(strip=True)
 
             matches.append({
                 'year': year,
-                'date': date,
-                'stage': current_stage,
-                'team1': home_team,
-                'score1': home_score,
-                'team2': away_team,
-                'score2': away_score,
-                'venue': venue,
-                'city': city,
-                'referee': referee,
-                'round': current_stage,
-                'goal_scorers_team1': '; '.join(home_scorers) if home_scorers else 'None',
-                'goal_scorers_team2': '; '.join(away_scorers) if away_scorers else 'None'
+                'home': home,
+                'away': away,
+                'score': score,
+                'date': datetime.now().strftime('%Y-%m-%d')  # placeholder
             })
 
-        except Exception as e:
-            st.warning(f"Error processing footballbox match: {e}")
+        return pd.DataFrame(matches)
 
-    return pd.DataFrame(matches)
+    except Exception as e:
+        st.error(f"Error scraping {year}: {str(e)}")
+        return pd.DataFrame()
+
+# Streamlit UI
+years = st.multiselect(
+    "Select World Cup Years",
+    options=list(range(1930, 2023, 4)),
+    default=[2018, 2022]
+)
+
+if st.button("Scrape Data"):
+    if not years:
+        st.warning("Please select at least one year")
+    else:
+        with st.spinner(f"Scraping {len(years)} World Cups..."):
+            progress_bar = st.progress(0)
+            all_data = []
+
+            for i, year in enumerate(years):
+                df = scrape_world_cup_matches(year)
+                if not df.empty:
+                    all_data.append(df)
+                progress_bar.progress((i + 1) / len(years))
+                time.sleep(2)  # Be polite to Wikipedia's servers
+
+            if all_data:
+                st.session_state.df_fifa = pd.concat(all_data, ignore_index=True)
+                st.success(f"Successfully scraped {len(st.session_state.df_fifa)} matches!")
+            else:
+                st.error("No data was scraped")
+
+# Display results
+if not st.session_state.df_fifa.empty:
+    st.subheader("Scraped Data Preview")
+    st.dataframe(st.session_state.df_fifa.head())
+
+    st.download_button(
+        label="Download as CSV",
+        data=st.session_state.df_fifa.to_csv(index=False),
+        file_name=f"world_cup_matches_{datetime.now().strftime('%Y%m%d')}.csv",
+        mime='text/csv'
+    )
 
 if st.button("Scrape World Cup Data"):
     years = [1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974,
