@@ -7,20 +7,11 @@ Original file is located at
     https://colab.research.google.com/drive/1d0HcXSg2RO_18qX7YUysegl3qofz3r1u
 """
 
-!pip install pymongo
-
-!odbcinst -q -d -n "ODBC Driver 17 for SQL Server"
-
-!pip install pyodbc sqlalchemy
-
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 import re
 from datetime import datetime
-import pyodbc  # For MSSQL connection
-from sqlalchemy import create_engine
-import urllib.parse
 
 def scrape_world_cup_matches(year):
     url = f'https://en.wikipedia.org/wiki/{year}_FIFA_World_Cup'
