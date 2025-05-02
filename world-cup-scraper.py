@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1eKR3LQn2iakqXuauz7DXvM6npY2L4bD1
 """
 
-!pip install streamlit requests beautifulsoup4 pandas pymongo matplotlib seaborn
-
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
