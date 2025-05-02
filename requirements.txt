@@ -1,6 +1,7 @@
-beautifulsoup4
-requests
-pandas
-lxml
-pymongo
 streamlit
+requests
+beautifulsoup4
+pandas
+pymongo
+matplotlib
+seaborn
