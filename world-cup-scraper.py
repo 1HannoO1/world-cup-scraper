@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from datetime import datetime
+import streamlit as st
 
 def scrape_world_cup_matches(year):
     url = f'https://en.wikipedia.org/wiki/{year}_FIFA_World_Cup'
@@ -284,7 +285,7 @@ print(df_fifa.isnull().sum())
 
 # Check cleaned data sample
 print("\nSample cleaned data:")
-display(df_fifa.head(3))
+st.write(df_fifa.head(3))
 
 from pymongo import MongoClient
 import json
