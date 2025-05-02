@@ -563,8 +563,6 @@ for i, value in enumerate(top_scorers['Total Goals']):
 plt.tight_layout()
 plt.show()
 
-pip freeze > requirements.txt
-
 # Commented out IPython magic to ensure Python compatibility.
 import os
 from getpass import getpass
