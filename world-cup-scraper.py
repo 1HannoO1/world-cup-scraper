@@ -56,8 +56,12 @@ st.sidebar.header("🔍 Filter Matches")
 years = sorted(df['year'].unique())
 selected_years = st.sidebar.multiselect("Select Years", years, default=[2022])
 
-stages = sorted(df['stage'].unique())
-selected_stages = st.sidebar.multiselect("Select Stages", stages, default=["Final", "Semi-finals"])
+all_stages = sorted(df['stage'].unique())
+
+# Filter out the group letter stages (Group A, Group B, etc.)
+filtered_stages = [stage for stage in all_stages if not (stage.startswith('Group ') and len(stage) == 7 and stage[-1].isalpha())]
+
+selected_stages = st.sidebar.multiselect("Select Stages", filtered_stages, default=["Final", "Semi-finals"])
 
 teams = sorted(set(df['team1'].unique()) | set(df['team2'].unique()))
 selected_team = st.sidebar.selectbox("Filter by Team", ["All"] + teams)
