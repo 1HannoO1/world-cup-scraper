@@ -24,6 +24,10 @@ def load_data():
     collection = db["matches"]
     data = list(collection.find())
     df = pd.DataFrame(data)
+    # Remove logical duplicates (same teams, scores, year, and stage)
+    df = df.drop_duplicates(subset=["team1", "team2", "score1", "score2", "year", "stage"])
+    df.fillna("None", inplace=True)
+    df['total_goals'] = df['score1'] + df['score2']
     return df
 
 df = load_data()
