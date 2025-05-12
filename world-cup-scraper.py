@@ -66,17 +66,26 @@ cities = sorted(df['city'].unique())
 selected_city = st.sidebar.selectbox("Filter by City", ["All"] + cities)
 
 # Filter DataFrame
-filtered_df = df[df['year'].isin(selected_years) & df['stage'].isin(selected_stages)]
+filtered_df = df[
+    df['year'].isin(selected_years) & 
+    df['stage'].isin(selected_stages)
+]
 
 if selected_team != "All":
-    filtered_df = filtered_df[(filtered_df['team1'] == selected_team) | (filtered_df['team2'] == selected_team)]
+    filtered_df = filtered_df[
+        (filtered_df['team1'] == selected_team) | 
+        (filtered_df['team2'] == selected_team)
+    ]
 
 if selected_city != "All":
     filtered_df = filtered_df[filtered_df['city'] == selected_city]
 
-# Display filtered data
+# Display filtered data with all columns except MongoDB _id
 st.subheader("📋 Filtered Matches")
-st.dataframe(filtered_df[['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city']], height=300)
+st.dataframe(
+    filtered_df[['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city']],
+    height=300
+)
 
 # Plot 1: Matches per year
 st.subheader("📊 Number of Matches per World Cup Edition")
