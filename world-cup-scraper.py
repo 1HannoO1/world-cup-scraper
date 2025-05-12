@@ -82,10 +82,7 @@ if selected_city != "All":
 
 # Display filtered data with all columns except MongoDB _id
 st.subheader("📋 Filtered Matches")
-st.dataframe(
-    filtered_df[['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city']],
-    height=300
-)
+st.dataframe(filtered_df, height=300, use_container_width=True)
 
 # Plot 1: Matches per year
 st.subheader("📊 Number of Matches per World Cup Edition")
