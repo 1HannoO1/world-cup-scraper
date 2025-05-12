@@ -24,21 +24,13 @@ def load_data():
     collection = db["matches"]
     data = list(collection.find())
     df = pd.DataFrame(data)
-    # Ensure all necessary columns exist
     expected_cols = ['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city']
     for col in expected_cols:
         if col not in df.columns:
-            df[col] = None  # or appropriate default, like 0 for scores
+            df[col] = None
 
-    # Optional: normalize team order to avoid flipped match duplicates
-    df['team_min'] = df[['team1', 'team2']].min(axis=1)
-    df['team_max'] = df[['team1', 'team2']].max(axis=1)
-
-    # Drop logical duplicates
-    df = df.drop_duplicates(subset=['team_min', 'team_max', 'score1', 'score2', 'year', 'stage'])
-
-    # Drop helper columns
-    df.drop(columns=['team_min', 'team_max'], inplace=True)
+    # Drop duplicates only by exact same match data
+    df = df.drop_duplicates(subset=['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city'])
 
     df.fillna("None", inplace=True)
     df['total_goals'] = df['score1'] + df['score2']
