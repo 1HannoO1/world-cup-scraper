@@ -19,22 +19,33 @@ st.title("⚽ FIFA World Cup Matches Dashboard (1930 - 2022)")
 # MongoDB connection
 @st.cache_resource
 def load_data():
-    client = MongoClient("mongodb+srv://MuhannadMustafa:mmmuhannaddd@cluster0.9n4ckv1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true")
+    client = MongoClient("mongodb+srv://MuhannadMustafa:mmmuhannaddd@cluster0.9ckv1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true")
     db = client["fifa_world_cup"]
     collection = db["matches"]
     data = list(collection.find())
     df = pd.DataFrame(data)
+
+    # Ensure required columns exist
     expected_cols = ['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city']
     for col in expected_cols:
         if col not in df.columns:
             df[col] = None
 
-    # Drop duplicates only by exact same match data
-    df = df.drop_duplicates(subset=['year', 'date', 'team1', 'score1', 'team2', 'score2', 'stage', 'city'])
+    # Drop exact duplicates (row-wise duplicates, not logical)
+    df.drop_duplicates(inplace=True)
 
+    # Clean and fill missing values
     df.fillna("None", inplace=True)
+
+    # Ensure scores are numeric (in case they came in as strings)
+    df['score1'] = pd.to_numeric(df['score1'], errors='coerce').fillna(0).astype(int)
+    df['score2'] = pd.to_numeric(df['score2'], errors='coerce').fillna(0).astype(int)
+
+    # Calculate total goals
     df['total_goals'] = df['score1'] + df['score2']
+
     return df
+
 
 df = load_data()
 df.fillna("None", inplace=True)
