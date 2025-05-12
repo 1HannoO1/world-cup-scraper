@@ -19,7 +19,7 @@ st.title("⚽ FIFA World Cup Matches Dashboard (1930 - 2022)")
 # MongoDB connection
 @st.cache_resource
 def load_data():
-    client = MongoClient("mongodb+srv://MuhannadMustafa:mmmuhannaddd@cluster0.9ckv1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true")
+    client = MongoClient("mongodb+srv://MuhannadMustafa:mmmuhannaddd@cluster0.9n4ckv1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true")
     db = client["fifa_world_cup"]
     collection = db["matches"]
     data = list(collection.find())
