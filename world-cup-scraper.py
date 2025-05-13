@@ -46,6 +46,27 @@ def load_data():
 
     return df
 
+# MongoDB Refresh Button (put this after df = load_data())
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🛠 Admin Tools")
+
+if st.sidebar.button("🔁 Refresh MongoDB Data"):
+    with st.spinner("Refreshing data in MongoDB..."):
+        # Reconnect
+        client = MongoClient("mongodb+srv://MuhannadMustafa:mmmuhannaddd@cluster0.9n4ckv1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true")
+        db = client["fifa_world_cup"]
+        collection = db["matches"]
+
+        # Drop existing documents
+        collection.delete_many({})
+
+        try:
+            df_fifa = pd.read_csv("your_cleaned_fifa_data.csv")  # Replace with your actual source
+            data_dict = df_fifa.fillna("None").to_dict("records")
+            collection.insert_many(data_dict)
+            st.success("✅ MongoDB data refreshed successfully!")
+        except Exception as e:
+            st.error(f"❌ Error during refresh: {e}")
 
 df = load_data()
 df.fillna("None", inplace=True)
