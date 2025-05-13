@@ -183,7 +183,10 @@ st.plotly_chart(fig6, use_container_width=True)
 # Plot 7: Cities with Most Matches Hosted
 st.subheader("🏟️ Cities with Most Matches Hosted")
 
-city_counts = df['city'].value_counts().reset_index()
+# Remove unknown/placeholder cities
+valid_cities_df = df[~df['city'].isin(["None", "Unknown", "unknown", "", None])]
+
+city_counts = valid_cities_df['city'].value_counts().reset_index()
 city_counts.columns = ['city', 'matches']
 top_cities = city_counts.head(10)
 
