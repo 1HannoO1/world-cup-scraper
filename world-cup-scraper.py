@@ -129,6 +129,71 @@ fig4 = px.bar(top_results, x='count', y='result', orientation='h',
 fig4.update_layout(yaxis={'categoryorder': 'total ascending'})
 st.plotly_chart(fig4, use_container_width=True)
 
+# Plot 5: Top 10 Highest Scoring Teams
+st.subheader("🥅 Top 10 Highest Scoring Teams (All Time)")
+
+# Combine team1 and team2 scores
+goals_team1 = df.groupby('team1')['score1'].sum().reset_index().rename(columns={'team1': 'team', 'score1': 'goals'})
+goals_team2 = df.groupby('team2')['score2'].sum().reset_index().rename(columns={'team2': 'team', 'score2': 'goals'})
+total_goals_by_team = pd.concat([goals_team1, goals_team2]).groupby('team')['goals'].sum().reset_index()
+
+top_goal_teams = total_goals_by_team.sort_values(by='goals', ascending=False).head(10)
+
+fig5 = px.bar(top_goal_teams, x='team', y='goals', color='goals', title='Top 10 Highest Scoring Teams',
+              labels={'goals': 'Total Goals', 'team': 'Team'}, color_continuous_scale='Reds')
+st.plotly_chart(fig5, use_container_width=True)
+
+# Plot 6: Top 10 Teams by Number of Matches Played
+st.subheader("📅 Top 10 Teams by Matches Played")
+
+team1_counts = df['team1'].value_counts().reset_index()
+team2_counts = df['team2'].value_counts().reset_index()
+team1_counts.columns = ['team', 'matches']
+team2_counts.columns = ['team', 'matches']
+
+total_matches = pd.concat([team1_counts, team2_counts]).groupby('team')['matches'].sum().reset_index()
+top_teams_by_matches = total_matches.sort_values('matches', ascending=False).head(10)
+
+fig6 = px.bar(top_teams_by_matches, x='team', y='matches', color='matches', title='Top 10 Teams by Matches Played',
+              labels={'matches': 'Matches Played', 'team': 'Team'}, color_continuous_scale='Blues')
+st.plotly_chart(fig6, use_container_width=True)
+
+
+# Plot 7: Cities with Most Matches Hosted
+st.subheader("🏟️ Cities with Most Matches Hosted")
+
+city_counts = df['city'].value_counts().reset_index()
+city_counts.columns = ['city', 'matches']
+top_cities = city_counts.head(10)
+
+fig7 = px.bar(top_cities, x='matches', y='city', orientation='h', color='matches',
+              title='Top 10 Cities by Matches Hosted', color_continuous_scale='plasma')
+fig7.update_layout(yaxis={'categoryorder': 'total ascending'})
+st.plotly_chart(fig7, use_container_width=True)
+
+
+# Plot 8: Distribution of Winning Margins
+st.subheader("📏 Winning Margin Distribution")
+
+df['winning_margin'] = abs(df['score1'] - df['score2'])
+
+fig8 = px.histogram(df, x='winning_margin', nbins=10, title="Distribution of Winning Margins",
+                    labels={'winning_margin': 'Goal Difference'}, color_discrete_sequence=['teal'])
+st.plotly_chart(fig8, use_container_width=True)
+
+
+# Plot 9: Cumulative Matches Over the Years
+st.subheader("📈 Cumulative Number of Matches Over Time")
+
+matches_per_year = df['year'].value_counts().sort_index().reset_index()
+matches_per_year.columns = ['year', 'matches']
+matches_per_year['cumulative_matches'] = matches_per_year['matches'].cumsum()
+
+fig9 = px.line(matches_per_year, x='year', y='cumulative_matches', markers=True,
+               title="Cumulative Number of Matches Over Time", labels={'cumulative_matches': 'Cumulative Matches'})
+st.plotly_chart(fig9, use_container_width=True)
+
+
 # Download full CSV
 st.sidebar.markdown("### 📥 Download")
 csv = df.to_csv(index=False).encode('utf-8')
